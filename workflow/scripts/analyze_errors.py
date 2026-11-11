@@ -74,7 +74,7 @@ def main():
     print("\n== START-CODON disagreements (same stop, different start) ==")
     diff = [k for k in ref.keys() & pred.keys() if ref[k][0] != pred[k][0]]
     shorter = sum(1 for k in diff if abs(pred[k][0] - k[2]) < abs(ref[k][0] - k[2]))
-    print(f"total {len(diff)}: Prodigal start downstream (shorter protein) {shorter}, "
+    print(f"total {len(diff)}: predicted start downstream (shorter protein) {shorter}, "
           f"upstream (longer protein) {len(diff) - shorter}")
 
 

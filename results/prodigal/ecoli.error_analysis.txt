@@ -17,4 +17,4 @@ total 171
   length >=600 nt: 1
 
 == START-CODON disagreements (same stop, different start) ==
-total 236: Prodigal start downstream (shorter protein) 141, upstream (longer protein) 95
+total 236: predicted start downstream (shorter protein) 141, upstream (longer protein) 95

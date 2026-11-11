@@ -1,0 +1,20 @@
+== EXTRA predictions (not in reference) ==
+total 342
+    139  overlaps reference pseudogene
+    120  intergenic (no reference feature)
+     56  overlaps reference gene on opposite strand
+     27  overlaps reference gene, same strand (different stop)
+  length 300-599 nt: 43
+  length <300 nt: 248
+  length >=600 nt: 51
+
+== MISSED reference genes ==
+total 235
+    184  no prediction at all
+     51  overlapped by a prediction, same strand (different stop)
+  length 300-599 nt: 35
+  length <300 nt: 195
+  length >=600 nt: 5
+
+== START-CODON disagreements (same stop, different start) ==
+total 998: predicted start downstream (shorter protein) 596, upstream (longer protein) 402
