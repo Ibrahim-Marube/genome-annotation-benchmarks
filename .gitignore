@@ -1,0 +1,6 @@
+data/
+*.fna
+*.faa
+*.gz
+__pycache__/
+slurm-*.out

@@ -1,0 +1,5 @@
+reference genes (non-pseudo CDS): 4290
+predicted genes                 : 4319
+3'-end matches (gene found)     : 4119  sensitivity 0.960  precision 0.954
+exact matches (start+stop)      : 3883  sensitivity 0.905  precision 0.899
+start disagrees (same stop)     : 236
