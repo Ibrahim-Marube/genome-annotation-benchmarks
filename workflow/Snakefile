@@ -1,0 +1,121 @@
+"""Gene-prediction benchmark: Prodigal and Glimmer3 scored against RefSeq.
+
+Run from the repository root:
+    snakemake -s workflow/Snakefile --cores 2 --use-envmodules --use-conda
+"""
+configfile: "config.yaml"
+
+GENOMES = list(config["genomes"])
+TOOLS = config["tools"]
+
+wildcard_constraints:
+    g="[A-Za-z0-9_]+",
+    tool="|".join(TOOLS),
+
+
+rule all:
+    input:
+        "results/comparison.md",
+
+
+# ---- data ------------------------------------------------------------------
+rule download:
+    """Fetch genome FASTA and reference GFF3 from NCBI (skipped if present)."""
+    output:
+        "data/{g}/{acc}_genomic.{ext}",
+    wildcard_constraints:
+        ext="fna|gff",
+    params:
+        url=lambda wc: config["genomes"][wc.g]["url"],
+    shell:
+        "curl -sS -f -o {output}.gz {params.url}.{wildcards.ext}.gz && gunzip -f {output}.gz"
+
+
+def fna(wc):
+    return config["genomes"][wc.g]["fna"]
+
+
+def ref(wc):
+    return config["genomes"][wc.g]["gff"]
+
+
+# ---- gene prediction -------------------------------------------------------
+rule prodigal:
+    input:
+        fna,
+    output:
+        gff="results/prodigal/{g}.gff",
+    log:
+        "results/prodigal/{g}.log",
+    envmodules:
+        "bio/prodigal/2.6.3-GCCcore-10.2.0",
+    shell:
+        "prodigal -i {input} -p single -f gff -o {output.gff} 2> {log}"
+
+
+rule glimmer_predict:
+    """Glimmer3 self-training recipe: long ORFs -> train ICM -> predict."""
+    input:
+        fna,
+    output:
+        predict="results/glimmer/{g}.predict",
+    params:
+        prefix="results/glimmer/{g}",
+    log:
+        "results/glimmer/{g}.log",
+    conda:
+        "../envs/glimmer.yaml"
+    shell:
+        """
+        long-orfs -n -t 1.15 {input} {params.prefix}.longorfs > {log} 2>&1
+        extract -t {input} {params.prefix}.longorfs > {params.prefix}.train 2>> {log}
+        build-icm -r {params.prefix}.icm < {params.prefix}.train >> {log} 2>&1
+        glimmer3 -o50 -g110 -t30 {input} {params.prefix}.icm {params.prefix} >> {log} 2>&1
+        """
+
+
+rule glimmer_gff:
+    input:
+        fna=fna,
+        predict="results/glimmer/{g}.predict",
+    output:
+        gff="results/glimmer/{g}.gff",
+    shell:
+        "python3 workflow/scripts/glimmer_to_gff.py {input.fna} {input.predict} > {output.gff}"
+
+
+# ---- scoring ---------------------------------------------------------------
+rule compare:
+    input:
+        ref=ref,
+        pred="results/{tool}/{g}.gff",
+    output:
+        summary="results/{tool}/{g}.summary.txt",
+        missed="results/{tool}/{g}.missed.tsv",
+        extra="results/{tool}/{g}.extra.tsv",
+        start_diff="results/{tool}/{g}.start_diff.tsv",
+    params:
+        prefix="results/{tool}/{g}",
+    shell:
+        "python3 workflow/scripts/compare_gff.py {input.ref} {input.pred} {params.prefix} "
+        "| tee {output.summary}"
+
+
+rule error_analysis:
+    input:
+        ref=ref,
+        pred="results/{tool}/{g}.gff",
+    output:
+        "results/{tool}/{g}.error_analysis.txt",
+    shell:
+        "python3 workflow/scripts/analyze_errors.py {input.ref} {input.pred} > {output}"
+
+
+rule comparison_table:
+    input:
+        summaries=expand("results/{tool}/{g}.summary.txt", tool=TOOLS, g=GENOMES),
+        errors=expand("results/{tool}/{g}.error_analysis.txt", tool=TOOLS, g=GENOMES),
+    output:
+        "results/comparison.md",
+    shell:
+        "python3 workflow/scripts/make_table.py {input.summaries} > {output}"

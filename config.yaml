@@ -1,0 +1,8 @@
+# Genomes to benchmark. Add an entry to run the whole comparison on another genome.
+genomes:
+  ecoli:
+    fna: data/ecoli/GCF_000005845.2_ASM584v2_genomic.fna
+    gff: data/ecoli/GCF_000005845.2_ASM584v2_genomic.gff
+    url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic
+
+tools: [prodigal, glimmer]
